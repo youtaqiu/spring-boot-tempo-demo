@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: user
+  cloud:
+    consul:
+      host: consul
+      port: 8500
+#  r2dbc:
+#    url: r2dbc:mariadb://mysql/tempo?useUnicode=true&characterEncoding=utf-8&useSSL=false&autoReconnect=true&failOverReadOnly=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+  datasource:
+    url: jdbc:mysql://mysql/tempo?useUnicode=true&characterEncoding=utf-8&useSSL=false&autoReconnect=true&failOverReadOnly=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: password
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+    hibernate:
+      ddl-auto: update
+
+server:
+  port: 9901
