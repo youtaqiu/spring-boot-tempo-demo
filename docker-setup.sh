@@ -2,7 +2,9 @@
 set -e
 
 echo "Building jar..."
-mvn clean install
+gradle build
+gradle :user-server:jibDockerBuild
+gradle :order-server:jibDockerBuild
 
 NID=$(docker network ls | grep "tempo-net" | awk '{print $1}')
 if [ -n "$NID" ]; then

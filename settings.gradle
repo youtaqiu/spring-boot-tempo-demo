@@ -1,0 +1,4 @@
+rootProject.name = "spring-boot-tempo-demo"
+include(":tempo-api")
+include(":order-server")
+include(":user-server")

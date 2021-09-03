@@ -1,121 +1,113 @@
 version: '3.3'
 
 services:
-    mysql:
-        image: mysql:5.7
-        container_name: mysql_service
-        restart: always
-        environment:
-            MYSQL_ROOT_PASSWORD: password
-            MYSQL_DATABASE: tempo
-        volumes:
-            - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-        networks:
-            - tempo-net
-    consul:
-        image: consul
-        ports:
-            - "8500:8500"
-            - "8300:8300"
-            - "8301:8301"
-            - "8302:8302"
-            - "8400:8400"
-            - "8600:53/udp"
-        networks:
-            - tempo-net
-    user:
-        build: ./user-server
-        container_name: user-server
-        ports:
-            - 9901:9901
-        environment:
-            - logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg traceID=%X{trace_id} %n
-            - OTEL_EXPORTER=otlp_span,prometheus
-            - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:55680
-            - OTEL_EXPORTER_OTLP_INSECURE=true
-            - OTEL_RESOURCE_ATTRIBUTES=service.name=user
-        depends_on:
-            - mysql
-            - consul
-        networks:
-            - tempo-net
-        logging:
-            driver: loki
-            options:
-                loki-url: 'http://localhost:3100/api/prom/push'
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: tempo
+    volumes:
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
 
-    order:
-        build: ./order-server
-        container_name: order-server
-        ports:
-            - 9902:9902
-        environment:
-            - logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg traceID=%X{trace_id} %n
-            - OTEL_EXPORTER=otlp_span,prometheus
-            - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:55680
-            - OTEL_EXPORTER_OTLP_INSECURE=true
-            - OTEL_RESOURCE_ATTRIBUTES=service.name=order
-        depends_on:
-            - mysql
-            - consul
-        networks:
-            - tempo-net
-        logging:
-            driver: loki
-            options:
-                loki-url: 'http://localhost:3100/api/prom/push'
-    tempo:
-        image: grafana/tempo:0.5.0
-        command: ["--target=all", "--storage.trace.backend=local", "--storage.trace.local.path=/var/tempo", "--auth.enabled=false"]
-        ports:
-            - 8081:80
-            - 55680:55680
-        networks:
-            - tempo-net
-    tempo-query:
-        image: grafana/tempo-query
-        #command: ["--grpc-storage-plugin.configuration-file=/etc/tempo-query.yaml"]
-        environment:
-            - BACKEND=tempo:80
-        volumes:
-            - ./etc/tempo-query.yaml:/etc/tempo-query.yaml
-        ports:
-            - "16686:16686"  # jaeger-ui
-        depends_on:
-            - tempo
-        networks:
-            - tempo-net
-        logging:
-            driver: loki
-            options:
-                loki-url: 'http://localhost:3100/api/prom/push'
-    loki:
-        image: grafana/loki:2.2.0
-        command: -config.file=/etc/loki/local-config.yaml
-        ports:
-            - "3100:3100"
-        networks:
-            - tempo-net
-        logging:
-            driver: loki
-            options:
-                loki-url: 'http://localhost:3100/api/prom/push'
-    grafana:
-        image: grafana/grafana:7.3.7
-        volumes:
-            - ./config/grafana:/etc/grafana/provisioning/datasources
-        environment:
-            - GF_AUTH_ANONYMOUS_ENABLED=true
-            - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-            - GF_AUTH_DISABLE_LOGIN_FORM=true
-        ports:
-            - "3000:3000"
-        networks:
-            - tempo-net
-        logging:
-            driver: loki
-            options:
-                loki-url: 'http://localhost:3100/api/prom/push'
+  consul:
+    image: consul
+    container_name: consul
+    ports:
+      - "8500:8500"
+      - "8300:8300"
+      - "8301:8301"
+      - "8302:8302"
+      - "8400:8400"
+      - "8600:53/udp"
+
+  user:
+    image: youtaqiu/user-server
+    container_name: user-server
+    ports:
+      - 9901:9901
+    environment:
+      - logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg traceID=%X{trace_id} %n
+      - OTEL_EXPORTER=otlp_span,prometheus
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:55680
+      - OTEL_EXPORTER_OTLP_INSECURE=true
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=user
+    depends_on:
+      - mysql
+      - consul
+
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+
+  order:
+    image: youtaqiu/order-server
+    container_name: order-server
+    ports:
+      - 9902:9902
+    environment:
+      - logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg traceID=%X{trace_id} %n
+      - OTEL_EXPORTER=otlp_span,prometheus
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:55680
+      - OTEL_EXPORTER_OTLP_INSECURE=true
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=order
+    depends_on:
+      - mysql
+      - consul
+
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+  tempo:
+    image: grafana/tempo
+    container_name: tempo
+    command: [ "--target=all", "--storage.trace.backend=local", "--storage.trace.local.path=/var/tempo", "--auth.enabled=false" ]
+    ports:
+      - 8081:80
+      - 55680:55680
+  tempo-query:
+    image: grafana/tempo-query
+    container_name: jaeger
+    environment:
+      - BACKEND=tempo:80
+    volumes:
+      - ./etc/tempo-query.yaml:/etc/tempo-query.yaml
+    ports:
+      - "16686:16686"  # jaeger-ui
+    depends_on:
+      - tempo
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+  loki:
+    image: grafana/loki
+    container_name: loki
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+  grafana:
+    image: grafana/grafana:7.3.7
+    container_name: grafana
+    volumes:
+      - ./config/grafana:/etc/grafana/provisioning/datasources
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    ports:
+      - "3000:3000"
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
 
 networks:
     tempo-net:
