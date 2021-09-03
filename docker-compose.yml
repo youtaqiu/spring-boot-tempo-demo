@@ -56,7 +56,6 @@ services:
     depends_on:
       - mysql
       - consul
-
     logging:
       driver: loki
       options:
@@ -110,5 +109,6 @@ services:
         loki-url: 'http://localhost:3100/api/prom/push'
 
 networks:
-    tempo-net:
-        external: true
+  default:
+    external:
+      name: tempo-net

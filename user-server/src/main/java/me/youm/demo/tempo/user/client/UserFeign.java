@@ -35,14 +35,5 @@ public class UserFeign implements UserClient {
         var  userInfo = new UserInfo();
         BeanUtils.copyProperties(user,userInfo);
         return userInfo;
-//        return userRepo.findByUserId(userId)
-//                .switchIfEmpty(userRepo.save(User.builder()
-//                        .userId(userId)
-//                        .email("youtaqiu@gmail.com")
-//                        .username("youtaqiu")
-//                        .phone("13000000000")
-//                        .build()))
-//                .map(user -> BeanUtil.copyProperties(user,UserInfo.class));
-
     }
 }
